@@ -182,7 +182,20 @@ const store = configureStore({
 export default store
 ```
 
+4.mian中注入Provider组件并且传递store
 
+```jsx
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import store from './store/index.js'
+import { Provider } from 'react-redux'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <Provider store={store}>
+    <App />
+  </Provider>
+)
+```
 
 store的使用
 
