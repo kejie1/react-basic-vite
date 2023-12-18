@@ -315,3 +315,355 @@ const AsyncComponent = ()=>{
 }
 ```
 
+## 6.美团项目
+
+### 6.1创建依赖的slice
+
+```tsx
+/*
+ * @Author: chuandonghuang 1950439317@qq.com
+ * @Date: 2023-12-18 17:08:11
+ * @LastEditors: chuandonghuang 1950439317@qq.com
+ * @LastEditTime: 2023-12-18 18:11:58
+ * @Description:
+ */
+import { Foods } from "@/view/demo/meituan/components/FoodsCategory/FoodItem";
+import { Dispatch, createSlice } from "@reduxjs/toolkit";
+import axios from "axios";
+interface Takeaway {
+  tag: string;
+  name: string;
+  foods: Food[];
+}
+
+interface Food {
+  id: number;
+  name: string;
+  like_ratio_desc: string;
+  month_saled: number;
+  unit: string;
+  food_tag_list: string[][];
+  price: number;
+  picture: string;
+  description: string;
+  tag: string;
+  count: number;
+}
+const meiTuanSlice = createSlice({
+  name: "meituan",
+  initialState: {
+    foodsList: [], // 商品列表
+    currentIndex: 0, // 当前下标
+    carList: [], // 购物车列表
+  },
+  reducers: {
+    // 商品列表
+    setGoodsList(state: { foodsList: Takeaway[] }, action: { payload: any }) {
+      state.foodsList = action.payload;
+    },
+    // 当前选中的分类
+    setCurrentIndex(
+      state: { currentIndex: number },
+      action: { payload: number }
+    ) {
+      state.currentIndex = action.payload;
+    },
+    // 购物车
+    setCarlist(state: { carList: Food[] }, action: { payload: any }) {
+      let item = state.carList.find((x) => x.id === action.payload.id);
+      if (item) {
+        item.count<10 && item.count++
+      } else {
+        state.carList = [...state.carList,action.payload]
+      }
+    },
+    // 增加数量
+    increCounte(state: { carList: Food[] }, action: { payload: any }){
+        let item = state.carList.find((x) => x.id === action.payload.id);
+        if(item && item.count<10) item.count++
+    },
+    decreCounte(state: { carList: Food[] }, action: { payload: any }){
+        let item = state.carList.find((x) => x.id === action.payload.id);
+        if(item && item.count>0) {
+            item.count--
+        }
+        if(item?.count === 0){
+            state.carList = state.carList.filter(x=>x.count!==0)
+        }
+    },
+    // 清除购物车
+    clearCarList(state: { carList: Food[] }){
+        state.carList = []
+    }
+  },
+});
+
+const { setGoodsList, setCurrentIndex, setCarlist,increCounte,decreCounte,clearCarList } = meiTuanSlice.actions;
+
+const fetchGoodsList = () => {
+  return async (dispatch: Dispatch) => {
+    const res = await axios.get("http://localhost:3004/takeaway");
+    dispatch(setGoodsList(res.data));
+  };
+};
+export default meiTuanSlice.reducer;
+export { fetchGoodsList, setCurrentIndex, setCarlist,increCounte,decreCounte,clearCarList };
+
+```
+
+### 6.2在index入口合并
+
+```tsx
+import { configureStore } from "@reduxjs/toolkit";
+import countReducer from './modules/countStore'
+import channelReducer from './modules/channelStore'
+import meituanRefuce from './modules/meituanStore'
+const store = configureStore({
+  reducer:{
+    count:countReducer,
+    channel:channelReducer,
+    meituan:meituanRefuce
+  }
+})
+
+export default store
+```
+
+### 6.3主页渲染
+
+```tsx
+import './index.scss'
+
+
+import {NavBar} from './NavBar'
+import {Menu} from './Menu'
+import {Cart} from './Cart'
+import {FoodsCategory} from './FoodsCategory'
+import { useDispatch, useSelector } from 'react-redux'
+import { useEffect } from 'react'
+import { fetchGoodsList } from '@/store/modules/meituanStore'
+
+export const MeiTuan = () => {
+  const {foodsList,currentIndex} = useSelector(state=>state.meituan)
+  const dispatch = useDispatch()
+  useEffect(()=>{
+    dispatch(fetchGoodsList())
+  },[dispatch])
+  return (
+    <div className="home">
+      {/* 导航 */}
+      <NavBar />
+      {/* 内容 */}
+      <div className="content-wrap">
+        <div className="content">
+          <Menu />
+          <div className="list-content">
+            <div className="goods-list">
+              {/* 外卖商品列表 */}
+              {foodsList?.map((item,index) => {
+                return (
+                  index === currentIndex &&  <FoodsCategory
+                    key={item.tag}
+                    // 列表标题
+                    name={item.name}
+                    // 列表商品
+                    foods={item.foods}
+                  />
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 购物车 */}
+      <Cart />
+    </div>
+  )
+}
+
+export default NavBar
+```
+
+### 6.4 分类
+
+```tsx
+import { useDispatch } from 'react-redux'
+import './index.scss'
+import { setCarlist } from '@/store/modules/meituanStore'
+export const Foods = ({
+  id,
+  picture,
+  name,
+  unit,
+  description,
+  food_tag_list,
+  month_saled,
+  like_ratio_desc,
+  price,
+  tag,
+  count
+}) => {
+const dispatch = useDispatch()
+  return (
+    <dd className="cate-goods">
+      <div className="goods-img-wrap">
+        <img src={picture} alt="" className="goods-img" />
+      </div>
+      <div className="goods-info">
+        <div className="goods-desc">
+          <div className="goods-title">{name}</div>
+          <div className="goods-detail">
+            <div className="goods-unit">{unit}</div>
+            <div className="goods-detail-text">{description}</div>
+          </div>
+          <div className="goods-tag">{food_tag_list.join(' ')}</div>
+          <div className="goods-sales-volume">
+            <span className="goods-num">月售{month_saled}</span>
+            <span className="goods-num">{like_ratio_desc}</span>
+          </div>
+        </div>
+        <div className="goods-price-count">
+          <div className="goods-price">
+            <span className="goods-price-unit">¥</span>
+            {price}
+          </div>
+          <div className="goods-count">
+            <span className="plus" onClick={()=>{dispatch(setCarlist({
+  id,
+  picture,
+  name,
+  unit,
+  description,
+  food_tag_list,
+  month_saled,
+  like_ratio_desc,
+  price,
+  tag,
+  count
+}))}}></span>
+          </div>
+        </div>
+      </div>
+    </dd>
+  )
+}
+```
+
+### 6.5 购物车
+
+```tsx
+import classNames from 'classnames'
+import {Count} from '../Count'
+import './index.scss'
+import { useDispatch, useSelector } from 'react-redux'
+import { increCounte,decreCounte,clearCarList } from '@/store/modules/meituanStore'
+import { useState } from 'react'
+export const Cart = () => {
+  const {carList} = useSelector(state=>state.meituan)
+  const allPrice = carList.reduce((a,c)=>a+c.price*c.count,0)
+  const dispatch = useDispatch()
+  const [isShow,setIsShow] = useState(false)
+  const onShow=()=>{
+    if(carList.length>0){
+      setIsShow(true)
+    }
+  }
+  return (
+    <div className="cartContainer">
+      {/* 遮罩层 添加visible类名可以显示出来 */}
+      <div
+        className={classNames('cartOverlay',isShow&&'visible')}
+        onClick={()=>setIsShow(false)}
+      />
+      <div className="cart">
+        {/* fill 添加fill类名可以切换购物车状态*/}
+        {/* 购物车数量 */}
+        <div onClick={onShow} className={classNames('icon',carList.length > 0 && 'fill')}>
+          {carList.length > 0 && <div className="cartCornerMark">{carList.length}</div>}
+        </div>
+        {/* 购物车价格 */}
+        <div className="main">
+          <div className="price">
+            <span className="payableAmount">
+              <span className="payableAmountUnit">¥</span>
+              {allPrice.toFixed(2)}
+            </span>
+          </div>
+          <span className="text">预估另需配送费 ¥5</span>
+        </div>
+        {/* 结算 or 起送 */}
+        {allPrice > 20 ? (
+          <div className="goToPreview">去结算</div>
+        ) : (
+          <div className="minFee">¥20起送</div>
+        )}
+      </div>
+      {/* 添加visible类名 div会显示出来 */}
+      <div className={classNames('cartPanel',isShow &&'visible')}>
+        <div className="header">
+          <span className="text">购物车</span>
+          <span className="clearCart" onClick={()=>{dispatch(clearCarList())}}>
+            清空购物车
+          </span>
+        </div>
+
+        {/* 购物车列表 */}
+        <div className="scrollArea">
+          {carList.map((item:any,index:number) => {
+            return (
+              <div className="cartItem" key={index}>
+                <img className="shopPic" src={item?.picture} alt="" />
+                <div className="main">
+                  <div className="skuInfo">
+                    <div className="name">{item?.name}</div>
+                  </div>
+                  <div className="payableAmount">
+                    <span className="yuan">¥</span>
+                    <span className="price">{item?.price}</span>
+                  </div>
+                </div>
+                <div className="skuBtnWrapper btnGroup">
+                  <Count
+                    count={item?.count}
+                    onPlus={()=>{dispatch(increCounte(item))}}
+                    onMinus={()=>{dispatch(decreCounte(item))}}
+                  />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+6.4修复bug
+
+```tsx
+decreCounte(state: { carList: Food[] }, action: { payload: any }){
+        let item = state.carList.find((x) => x.id === action.payload.id);
+        if(item && item.count>0) {
+            item.count--
+        }
+    	// 当购物车中某项为0是更新购物车状态
+        if(item?.count === 0){
+            state.carList = state.carList.filter(x=>x.count!==0)
+        }
+    },
+```
+
+```tsx
+setCarlist(state: { carList: Food[] }, action: { payload: any }) {
+      let item = state.carList.find((x) => x.id === action.payload.id);
+      if (item) {
+      	// 在列表项添加时购物车该项的数量不能大于10
+        item.count<10 && item.count++
+      } else {
+        state.carList = [...state.carList,action.payload]
+      }
+    },
+```
+

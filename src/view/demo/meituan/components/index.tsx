@@ -17,7 +17,7 @@ import { useEffect } from 'react'
 import { fetchGoodsList } from '@/store/modules/meituanStore'
 
 export const MeiTuan = () => {
-  const {foodsList} = useSelector(state=>state.meituan)
+  const {foodsList,currentIndex} = useSelector(state=>state.meituan)
   const dispatch = useDispatch()
   useEffect(()=>{
     dispatch(fetchGoodsList())
@@ -26,17 +26,16 @@ export const MeiTuan = () => {
     <div className="home">
       {/* 导航 */}
       <NavBar />
-
       {/* 内容 */}
       <div className="content-wrap">
         <div className="content">
-          <Menu list={foodsList}/>
+          <Menu />
           <div className="list-content">
             <div className="goods-list">
               {/* 外卖商品列表 */}
-              {foodsList?.map(item => {
+              {foodsList?.map((item,index) => {
                 return (
-                  <FoodsCategory
+                  index === currentIndex &&  <FoodsCategory
                     key={item.tag}
                     // 列表标题
                     name={item.name}

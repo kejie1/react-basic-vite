@@ -5,8 +5,9 @@
  * @LastEditTime: 2023-12-18 17:38:24
  * @Description: 
  */
+import { useDispatch } from 'react-redux'
 import './index.scss'
-
+import { setCarlist } from '@/store/modules/meituanStore'
 export const Foods = ({
   id,
   picture,
@@ -20,7 +21,7 @@ export const Foods = ({
   tag,
   count
 }) => {
-
+const dispatch = useDispatch()
   return (
     <dd className="cate-goods">
       <div className="goods-img-wrap">
@@ -45,7 +46,19 @@ export const Foods = ({
             {price}
           </div>
           <div className="goods-count">
-            <span className="plus"></span>
+            <span className="plus" onClick={()=>{dispatch(setCarlist({
+  id,
+  picture,
+  name,
+  unit,
+  description,
+  food_tag_list,
+  month_saled,
+  like_ratio_desc,
+  price,
+  tag,
+  count
+}))}}></span>
           </div>
         </div>
       </div>
