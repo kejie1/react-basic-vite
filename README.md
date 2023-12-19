@@ -667,3 +667,32 @@ setCarlist(state: { carList: Food[] }, action: { payload: any }) {
     },
 ```
 
+## 7.React-Roter-Dom
+
+1.创建路由
+
+```tsx
+import ReactDOM from 'react-dom/client'
+import store from './store/index.js'
+import { Provider } from 'react-redux'
+// 
+import { createBrowserRouter,RouterProvider} from 'react-router-dom'
+// 创建路由实例
+const router = createBrowserRouter([
+  {
+    path:"/login",
+    element:<div>登陆页</div>,
+  },
+  {
+    path:'/register',
+    element:<div>注册</div>,
+  }
+])
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <Provider store={store}>
+        // 路由绑定
+    <RouterProvider router={router}/>
+  </Provider>
+)
+```
+
