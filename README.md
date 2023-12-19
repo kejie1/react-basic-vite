@@ -669,7 +669,7 @@ setCarlist(state: { carList: Food[] }, action: { payload: any }) {
 
 ## 7.React-Roter-Dom
 
-1.创建路由
+### 7.1.创建路由
 
 ```tsx
 import ReactDOM from 'react-dom/client'
@@ -695,4 +695,213 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </Provider>
 )
 ```
+
+### 7.2声明式导航
+
+```tsx
+import {Link} from 'react-router-dom'
+<Link to="/index">
+```
+
+### 7.3编程式(命令式)导航
+
+```tsx
+import {useNavigate} from 'react-router-dom'
+const navigate = useNavigate()
+navigate('/index')
+```
+
+### 7.4带参数的跳转
+
+```jsx
+export const QueryUserById = ()=>{
+    const navigate = useNavigate()
+    return(<>
+        <button onClick={()=>{navigate('/userInfo?id=10&&name=Tom')}}>searchParams传参</button>
+        <button onClick={()=>navigate('/userInfo/10001')}>params传参</button>
+    </>)
+}
+```
+
+#### 7.4.1searchParams获取参数
+
+```jsx
+export const GetUserInfoById = ()=>{
+    // 通过useSearchParams获取参数
+    const [params] = useSearchParams()
+    let id = params.get('id')
+    let name = params.get('name')
+   return(<>
+   this is userInfo page
+   searchParams传过来的参数id:{id},name:{name}
+   </>)
+}
+```
+
+#### 7.4.2 Params获取参数
+
+```jsx
+// params传参配置
+{
+        path:'/userInfo/:id/:name',
+        element:<GetUserInfoByIdFroParams />
+ }
+export const GetUserInfoByIdFroParams = ()=>{
+    // 通过Params获取参数
+    const params = useParams()
+    let typeId = params.id
+    let name = params.name
+    return(<>
+    this is userInfo page
+    params传过来的参数id:{typeId},name:{name}
+   </>)
+}
+```
+
+### 7.5嵌套路由
+
+```tsx
+// 嵌套路由
+    {
+        path:'/index',
+        element:<NestRoute />,
+        children:[
+            {
+                path:'info',
+                element:<NestInfo />
+            },
+            {
+                path:'add',
+                element:<NestAdd />
+            },
+            {
+                path:'update',
+                element:<NestUpdate />
+            },
+        ]
+    }
+import { Link, Outlet } from "react-router-dom"
+export const NestRoute = ()=>{
+    return(
+        <>
+        this is NestRoute page
+            <Link to='/index/info'>详情页</Link>
+            <Link to='/index/add'>添加页</Link>
+            <Link to='/index/update'>修改页</Link>
+            {/* 二级路由出口 */}
+            <Outlet />
+        </>
+    )
+}
+export const NestInfo = ()=>{
+    return(
+        <>
+            this is info page
+        </>
+    )
+}
+export const NestAdd = ()=>{
+    return(
+        <>
+            this is add page
+        </>
+    )
+}
+export const NestUpdate = ()=>{
+    return(
+        <>
+            this is update page
+        </>
+    )
+}
+```
+
+### 7.6默认二级路由
+
+```jsx
+// 嵌套路由
+    {
+        path:'/index',
+        element:<NestRoute />,
+        children:[
+            {
+            	// 去掉path，添加index:true
+            	index:true,
+                element:<NestInfo />
+            },
+            {
+                path:'add',
+                element:<NestAdd />
+            },
+            {
+                path:'update',
+                element:<NestUpdate />
+            },
+        ]
+    }
+```
+
+### 7.7404路由
+
+1.准备一个404组件
+
+2.在路由表的末尾以*作为路由path配置路由
+
+```jsx
+{
+        path:'*',
+        element:<NotFound />
+    }
+```
+
+### 7.8路由的两种模式
+
+#### 7.8.1hash模式
+
+使用createHashRouter创建
+
+使用window.location.hash属性和onhashchange事件，监听浏览器地址hash值的变化，执行js切换页面
+
+- hash指的是地址中#号以及后面的字符，也称为散列值，hash也称作锚点，本身是用来做页面跳转定位的
+
+- 散列值不会随着请求发到服务端，所以改变hash不会刷新页面
+
+- 监听window的hashchange事件，当散列值改变时，可以通过location.hash来获取和设置hash值
+
+- location.hash值的变化会直接反应到地址栏
+
+  总结:hash可以改变url，但是不会触发网页重新加载，即不会刷新页面，也就是说所有的页面跳转都是客户端进行操作，因此不算一次http请求，hash通过window.onhashchange方式监听hash变化，改变散列值，借此实现无刷新跳转功能，并且hash永远不会提交到server段
+
+  ```js
+  //设置 url 的 hash，会在当前url后加上'#abc'
+  window.location.hash='abc';
+  let hash = window.location.hash //'#abc'
+  
+  window.addEventListener('hashchange',function(){
+      //监听hash变化，点击浏览器的前进后退会触发
+  })
+  ```
+
+  
+
+#### 7.8.2history模式
+
+使用createBrowserRouter创建
+
+window.history属性指向History对象(H5新特性)，它表示当前窗口的浏览历史。当发生改变时，只会改变页面当前的路径，不会刷新页面。History对象保存了当前窗口访问过的所有的网页地址，通过histiry.length可以得出当前窗口一共访问过几个网址，由于安全原因，浏览器不允许脚本读取这些网址，但是允许在地址之间导航。浏览器工具栏的前进和后退按钮，其实就是对History对象进行操作
+
+History.back():移动到上一个网址，等同于点击浏览器的后退键
+
+History.forward():移动到写一个网址，等同于点击浏览器的前进键
+
+History.go():接受一个整数作为参数，以当前网址基准，移动到参数指定的网址，移动到以前访问过的页面时，页面通常是从浏览器缓存中加载，而不是重新要求服务器重新发送新的网页
+
+
+
+#### 7.8.3区别
+
+| 路由模式 | url表现     | 底层原理                   | 是否需要后端支持 |
+| -------- | ----------- | -------------------------- | ---------------- |
+| history  | url/login   | history对象+pushStatus事件 | 需要             |
+| hash     | url/#/login | 监听hasChange事件          | 不需要           |
 
